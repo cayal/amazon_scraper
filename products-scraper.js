@@ -13,12 +13,14 @@ const CONSTANTS = require('./constants');
 
 class ProductsScraper {
 
-    constructor({keyword, number, host, apiKey, save, country, fileType, showProgress }) {
+    constructor({keyword, filtersParam, sortParam, number, host, apiKey, save, country, fileType, showProgress }) {
         this.host = `https://${host || CONSTANTS.defaultAmazonUrl}`;
 
         this.alreadyScrappedProducts = {};
         this.apiKey = apiKey;
         this.keyword = keyword;
+        this.filtersParam= filtersParam;
+        this.sortParam = sortParam;
         this.fileType = fileType;
         this.numberOfProducts = parseInt(number) || CONSTANTS.defaultItemLimit;
         this.currentSearchPage = 1;
@@ -131,6 +133,8 @@ class ProductsScraper {
 
     async getCurrentPageData() {
         const queryParams = querystring.encode({
+            rh: this.filtersParam,
+            s: this.sortParam,
             k: this.keyword,
             ...(this.currentSearchPage > 1 ? { page: this.currentSearchPage, ref: `sr_pg_${this.currentSearchPage}` } : {})
         });
