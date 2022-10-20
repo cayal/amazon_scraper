@@ -13,7 +13,7 @@ const CONSTANTS = require('./constants');
 
 class ProductsScraper {
 
-    constructor({keyword, filtersParam, sortParam, number, host, apiKey, save, country, fileType, showProgress }) {
+    constructor({keyword, startPage, filtersParam, sortParam, number, host, apiKey, save, country, fileType, showProgress }) {
         this.host = `https://${host || CONSTANTS.defaultAmazonUrl}`;
 
         this.alreadyScrappedProducts = {};
@@ -23,11 +23,11 @@ class ProductsScraper {
         this.sortParam = sortParam;
         this.fileType = fileType;
         this.numberOfProducts = parseInt(number) || CONSTANTS.defaultItemLimit;
-        this.currentSearchPage = 1;
+        this.currentSearchPage = startPage >= 1 ? startPage : 1;
         this.saveToFile = save || false;
         this.country = country;
         this.progressBar = showProgress ? new cliProgress.SingleBar({
-            format: `Amazon Scraping: ${this.keyword} | {bar} | {percentage}% - {value}/{total} Products || ETA: {eta}s`,
+          format: `Amazon Scraping: ${this.keyword ? this.keyword : "[no keyword]"} | {bar} | {percentage}% - {value}/{total} Products || ETA: {eta}s`,
         }, cliProgress.Presets.shades_classic) : null;
         this.productsPromises = [];
         this.client = new ScrapingAntClient({ apiKey });
@@ -36,7 +36,6 @@ class ProductsScraper {
     async startScraping() {
         this.checkForCountry();
         this.checkForApiKey();
-        this.checkForKeyword();
         this.checkForFileType();
         this.checkForProductsNumber();
 
@@ -93,12 +92,6 @@ class ProductsScraper {
         }
     }
 
-    checkForKeyword() {
-        if (!this.keyword) {
-            throw `No keyword for search. Please specify it..`;
-        }
-    }
-
     checkForFileType() {
         if (this.fileType) {
             this.saveToFile = true;
@@ -119,7 +112,7 @@ class ProductsScraper {
 
     async checkAndSaveToFile() {
         if (this.saveToFile && Object.keys(this.alreadyScrappedProducts).length > 0) {
-            const preparedKeyword = this.keyword.replace(/\s/g, "_");
+            const preparedKeyword = this.keyword ? this.keyword.replace(/\s/g, "_") : "[no keyword]";
 
             if (this.fileType === CONSTANTS.supported_filetypes.csv) {
                 await writeDataToCsv(preparedKeyword, Object.values(this.alreadyScrappedProducts));
@@ -155,7 +148,7 @@ class ProductsScraper {
                     return products;
                 }
             } catch (err) {
-                console.error(`Failed to get page ${this.currentSearchPage} for keyword ${this.keyword}. Going to retry...`);
+                console.error(`Failed to get page ${this.currentSearchPage} for keyword ${this.keyword ? this.keyword : "[no keyword]"}. Going to retry...`);
             }
         }
 
